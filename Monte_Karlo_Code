@@ -1,1 +1,267 @@
+#include <iostream>
+#include <ctime>
+#include <cmath>
+#include <sstream>
+using namespace std;
 
+struct dot {
+	double x, y;
+};
+
+dot min(dot* dotes, int kolvo);
+
+dot max(dot* dotes, int kolvo);
+
+dot RandForm(dot maxDote, dot minDote);
+
+double IsPointInsidePolygon(dot* p, int kolvo, double x, double y);
+
+void Randomform(dot* dotes, int kolvo);
+
+void read(dot* dotes, int kolvo);
+
+void Menu();
+
+double CirclePoint(double x, double y, double R);
+
+double RingPoint(double x, double y, double R, double r);
+
+int main(int argc, char* argv[]) {
+	setlocale(LC_ALL, "russian");
+	srand(time(NULL));
+	int kolvo, choice, color;
+	int** plague;
+	plague = new int* [50];
+	for (int i = 0; i < 50; i++) {
+		plague[i] = new int[100];
+	}
+	for (int i = 0; i < 50; i++) {
+		for (int j = 0; j < 100; j++) {
+			plague[i][j] = 0;
+		}
+	}
+	double N, G = 0;
+	int I = 0;
+	stringstream convert1(argv[1]);
+	if (!(convert1 >> choice)) {
+		choice = 0;
+	}
+	stringstream convert2(argv[2]);
+	if (!(convert2 >> N)) {
+		N = 0;
+	}
+	if (choice == 1) {
+		kolvo = rand() % 10 + 3;
+		printf("%i\n", kolvo);
+		dot* dotes = new dot[kolvo];
+		Randomform(dotes, kolvo);
+		dot maxDot, minDot, RandDot;
+		maxDot = max(dotes, kolvo);
+		minDot = min(dotes, kolvo);
+		for (int i = 0; i < N; i++) {
+			RandDot = RandForm(maxDot, minDot);
+			I += IsPointInsidePolygon(dotes, kolvo, RandDot.x, RandDot.y);
+			if (IsPointInsidePolygon(dotes, kolvo, RandDot.x, RandDot.y)) {
+				plague[(int)(RandDot.y * 50 / maxDot.y)][(int)(RandDot.x * 100 / maxDot.x)] += 1;
+			}
+		}
+		for (int y = 49; y >= 0; y--) {
+			for (int x = 0; x < 99; x++) {
+					cout << "\x1b[38;5;" << 16 + 6 * plague[y][x] << "mо";
+			}
+			printf("\n");
+		}
+		printf("\x1b[0m");
+		double s = (maxDot.x - minDot.x) * (maxDot.y - minDot.y) * 1.0 * I / N;
+		printf("Площадь - %f\n", s);
+		printf("I - %i\n", I);
+		delete[] plague;
+	}
+	if (choice == 2) {
+		double R;
+		R = rand() % 25;
+		printf("Радиус оркужности  равен = %f\n", R);
+		dot maxDot, minDot, RandDot;
+		maxDot.x = R * 2;
+		maxDot.y = R * 2;
+		minDot.x = 0;
+		minDot.y = 0;
+		for (int i = 0; i < N; i++) {
+			RandDot = RandForm(maxDot, minDot);
+			I += CirclePoint(RandDot.x, RandDot.y, R);
+			if (CirclePoint(RandDot.x, RandDot.y, R)) {
+				plague[(int)(RandDot.y * 50 / maxDot.y)][(int)(RandDot.x * 100 / maxDot.x)] += 1;
+			}
+		}
+		for (int y = 49; y >= 0; y--) {
+			for (int x = 0; x < 99; x++) {
+				cout << "\033[38;5;" << 16 + 6 * plague[y][x] << "mо";
+			}
+			printf("\n");
+		}
+		printf("\033[0m");
+		double S = maxDot.x * maxDot.y * 1.0 * I / N;
+		printf("Площадь круга - %f\n", S);
+		printf("I - %i\n", I);
+		delete[] plague;
+	}
+	if (choice == 3) {
+		double R, r;
+		r = rand() % 25;
+		R = rand() % 11 + 26;
+		printf("Радиус оркужности 1 равен = %f\n", R);
+		printf("Радиус оркужности 2 равен = %f\n", r);
+		dot maxDot, minDot, RandDot;
+		maxDot.x = R * 2;
+		maxDot.y = R * 2;
+		minDot.x = 0;
+		minDot.y = 0;
+		for (int i = 0; i < N; i++) {
+			RandDot = RandForm(maxDot, minDot);
+			I += RingPoint(RandDot.x, RandDot.y, R, r);
+			if (RingPoint(RandDot.x, RandDot.y, R, r)) {
+				plague[(int)(RandDot.y * 50 / maxDot.y)][(int)(RandDot.x * 100 / maxDot.x)] += 1;
+			}
+		}
+		for (int y = 49; y >= 0; y--) {
+			for (int x = 0; x < 99; x++) {
+				cout << "\033[38;5;" << 16 + 6 * plague[y][x] << "mо";
+			}
+			printf("\n");
+		}
+		printf("\033[0m");
+		double S = maxDot.x * maxDot.y * 1.0 * I / N;
+		printf("Площадь кольца - %f\n", S);
+		printf("I - %i\n", I);
+		delete[] plague;
+	}
+	else {
+		printf("Введена несуществующая команда\n");
+	}
+	return 0;
+}
+
+double CirclePoint(double x, double y, double R) {
+	double h;
+	h = sqrt(pow(x - R, 2) + pow(y - R, 2));
+	if (h <= R) { return 1; }
+	return 0;
+}
+
+double RingPoint(double x, double y, double R, double r) {
+	double h, k;
+	h = sqrt(pow(x - R, 2) + pow(y - R, 2));
+	k = sqrt(pow(x - R, 2) + pow(y - R, 2));
+	if (h <= R && k >= r) { return 1; }
+	return 0;
+}
+
+double IsPointInsidePolygon(dot* p, int kolvo, double x, double y)
+{
+	int i1, i2, n, N, flag;
+	double S, S1, S2, S3;
+	N = kolvo;
+	for (n = 0; n < N; n++)
+	{
+		flag = 0;
+		i1 = n < N - 1 ? n + 1 : 0;
+		while (flag == 0)
+		{
+			i2 = i1 + 1;
+			if (i2 >= N)
+				i2 = 0;
+			if (i2 == (n < N - 1 ? n + 1 : 0))
+				break;
+			S = abs(p[i1].x * (p[i2].y - p[n].y) +
+				p[i2].x * (p[n].y - p[i1].y) +
+				p[n].x * (p[i1].y - p[i2].y));
+			S1 = abs(p[i1].x * (p[i2].y - y) +
+				p[i2].x * (y - p[i1].y) +
+				x * (p[i1].y - p[i2].y));
+			S2 = abs(p[n].x * (p[i2].y - y) +
+				p[i2].x * (y - p[n].y) +
+				x * (p[n].y - p[i2].y));
+			S3 = abs(p[i1].x * (p[n].y - y) +
+				p[n].x * (y - p[i1].y) +
+				x * (p[i1].y - p[n].y));
+			if (abs(S - (S1 + S2 + S3)) < 0.0001)
+			{
+				flag = 1;
+				break;
+			}
+			i1 = i1 + 1;
+			if (i1 >= N)
+				i1 = 0;
+		}
+		if (flag == 0)
+			break;
+	}
+	return flag;
+}
+
+dot max(dot* dotes, int kolvo) {
+	dot max = dotes[0];
+	for (int i = 1; i < kolvo; i++) {
+		if (dotes[i].x > max.x)
+			max.x = dotes[i].x;
+		if (dotes[i].y > max.y)
+			max.y = dotes[i].y;
+	}
+	return max;
+}
+
+dot min(dot* dotes, int kolvo) {
+	dot min = dotes[0];
+	for (int i = 1; i < kolvo; i++) {
+		if (dotes[i].x < min.x)
+			min.x = dotes[i].x;
+		if (dotes[i].y < min.y)
+			min.y = dotes[i].y;
+	}
+	return min;
+}
+
+dot RandForm(dot maxDot, dot minDot) {
+	dot point;
+	do { point.x = (rand() % (int)(maxDot.x - minDot.x) + minDot.x) + (float)(rand() % 1000) / 1000; } while (point.x < minDot.x && point.x > maxDot.x);
+	do { point.y = (rand() % (int)(maxDot.y - minDot.y) + minDot.y) + (float)(rand() % 1000) / 1000; } while (point.y< minDot.y && point.y > maxDot.y);
+	return point;
+}
+
+void Randomform(dot* dotes, int kolvo) {
+	double dlina, dlinaotr, x = 0, y, versh;
+	dlina = rand() % 101;
+	if (kolvo % 2 != 0) {
+		versh = (kolvo - 1) / 2.0;
+		dlinaotr = dlina / versh;
+		for (int i = 0; i < versh; i++) {
+			x = x + dlinaotr;
+			y = (rand() % 25) + (float)(rand() % 1000) / 1000;
+			dotes[i].x = x;
+			dotes[i].y = y;
+		}
+		dlinaotr = dlina / (versh + 1);
+		for (int i = versh; i < 2 * versh + 1; i++) {
+			x = x - dlinaotr;
+			y = (rand() % 50 + 25) + (float)(rand() % 1000) / 1000;
+			dotes[i].x = x;
+			dotes[i].y = y;
+		}
+	}
+	else {
+		versh = kolvo / 2.0;
+		dlinaotr = dlina / versh;
+		for (int i = 0; i < versh; i++) {
+			x = x + dlinaotr;
+			y = (rand() % 25) + (float)(rand() % 1000) / 1000;
+			dotes[i].x = x;
+			dotes[i].y = y;
+		}
+		for (int i = versh; i < 2 * versh; i++) {
+			x = x - dlinaotr;
+			y = (rand() % 50 + 26) + (float)(rand() % 1000) / 1000;
+			dotes[i].x = x;
+			dotes[i].y = y;
+		}
+	}
+}
